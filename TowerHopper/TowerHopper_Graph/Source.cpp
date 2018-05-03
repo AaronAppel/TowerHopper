@@ -15,9 +15,9 @@
 const float END_NODE_VALUE = -1.0f; // -1.0f to represent an end node
 const float NULL_NODE_VALUE = -2.0f; // null (-2.0f) to start since towers can't be negative
 
-class GraphNode
+struct GraphNode
 {
-public:
+    GraphNode() {};
     GraphNode(float value) { m_Value = value; }
     ~GraphNode() {}
 
@@ -59,9 +59,8 @@ int main()
 			if (towerData != nullptr)
 				delete towerData;
 			if (headNode != nullptr)
-			{
 				delete[] headNode;
-			}
+
 			currentNumTowers = rand() % maxTowers + 1;
 			towerData = GenerateTowerData(currentNumTowers, maxTowerHeight);
 
@@ -87,8 +86,9 @@ int main()
 	// clean up
 	if (towerData != nullptr)
 		delete towerData;
-	// TODO: delete nodes
-	// headNode
+
+    if (headNode != nullptr)
+        delete[] headNode;
 }
 
 const int* GenerateTowerData(int numTowers, int maxHeight)
@@ -178,34 +178,34 @@ bool GraphIsHoppable(GraphNode* headNode)
 GraphNode* GenerateTowerGraphUsingArray(const int nodes[], const int size)
 {
     // create list of nodes
-    std::vector<GraphNode*> nodesList;
+    GraphNode* nodesList = new GraphNode[size + 1]; // 1 extra end node
 
-    // instantiate node objects
+    // assign values
     for (int i = 0; i < size; i++)
     {
-        nodesList.push_back(new GraphNode(nodes[i]));
+        nodesList[i].m_Value = nodes[i];
     }
-    GraphNode* endNode = new GraphNode(-1.0f); // end node
+    nodesList[size].m_Value = END_NODE_VALUE; // mark as end node
 
-                                               // genereate the graph by linking nodes
-    for (int i = 0; i < nodesList.size(); i++)
+    // genereate the graph by linking nodes
+    for (int i = 0; i < size; i++)
     {
-        for (int j = 0; j < nodesList[i]->m_Value; j++)
+        for (int j = 0; j < nodesList[i].m_Value; j++)
         {
             int index = i + 1 + j; // i (current index or me) + 1 (move over 1) + j (current linked node)
-            if (index < nodesList.size()) // inside array?
+            if (index < size) // inside array?
             {
-                nodesList[i]->m_Links.push_back(nodesList[index]); // add link to node
+                nodesList[i].m_Links.push_back(&nodesList[index]); // add link to node
             }
             else
             {
                 // this node can hop to the end. add end of array node
-                nodesList[i]->m_Links.push_back(endNode);
+                nodesList[i].m_Links.push_back(&nodesList[size]);
                 break; // prevent additional links to the end
             }
         }
     }
 
     // remember to delete nodes
-    return nodesList[0]; // return 1st (head) node
+    return nodesList;
 }
